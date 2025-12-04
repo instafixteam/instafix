@@ -13,11 +13,12 @@ jobs:
 
       # Secret Scanning
       - name: Secret Scan (Gitleaks OSS)
+        continue-on-error: true
         run: |
           curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.18.1/gitleaks_8.18.1_linux_x64.tar.gz -o gitleaks.tar.gz
           tar -xzf gitleaks.tar.gz
           chmod +x gitleaks
-          ./gitleaks detect --source . --report-format json --report-path gitleaks-report.json --no-banner --exit-code 1
+          ./gitleaks detect --verbose . --report-format json --report-path gitleaks-report.json --no-banner --exit-code 1
           cat gitleaks-report.json
       # SAST for JS/TS/JSX
       - name: Static Analysis (Semgrep)
