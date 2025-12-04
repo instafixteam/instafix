@@ -1,0 +1,49 @@
+name: PR Security Checks
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Secret Scanning
+      - name: Secret Scan (Gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+
+      # SAST for JS/TS/JSX
+      - name: Static Analysis (Semgrep)
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: "p/owasp-top-ten"
+
+      # Install backend dependencies
+      - name: Install Backend
+        run: |
+          cd backend
+          npm install
+
+      # Install frontend dependencies
+      - name: Install Frontend
+        run: |
+          cd frontend
+          npm install
+
+      # SCA (Trivy filesystem scan)
+      - name: Dependency Scan Backend
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: fs
+          dir: ./backend
+          severity: HIGH,CRITICAL
+
+      - name: Dependency Scan Frontend
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: fs
+          dir: ./frontend
+          severity: HIGH,CRITICAL
