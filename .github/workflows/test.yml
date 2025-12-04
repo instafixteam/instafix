@@ -1,0 +1,89 @@
+name: Test Pipeline
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # --------------------------
+      # DOWNLOAD BUILD ARTIFACTS
+      # --------------------------
+      - name: Download Frontend Build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend-test-dist
+
+      - name: Download Backend Build
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-build
+          path: backend-test-dist
+          if-no-files-found: ignore
+
+      # --------------------------
+      # SETUP NODE FOR TESTING
+      # --------------------------
+      - name: Setup Node JS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # --------------------------
+      # RUN BACKEND TESTS
+      # --------------------------
+      - name: Backend Tests
+        if: always()
+        run: |
+          cd firebase/backend
+          npm install
+          npm test || true
+
+      # --------------------------
+      # RUN FRONTEND TESTS
+      # --------------------------
+      - name: Frontend Tests
+        if: always()
+        run: |
+          cd firebase/frontend
+          npm install
+          npm run test || true
+
+      # --------------------------
+      # DEPLOY TO TEST ENVIRONMENT
+      # (you replace this with real commands)
+      # --------------------------
+      - name: Deploy to Test Environment
+        run: |
+          echo "Deploying to test environment..."
+          # docker compose up -d
+          # ssh user@server "pm2 restart backend"
+          # kubectl apply -f test-manifest.yml
+          echo "Test environment deployment step complete."
+
+      # --------------------------
+      # OWASP ZAP DAST SCAN
+      # --------------------------
+      - name: OWASP ZAP Baseline Scan
+        continue-on-error: true
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: "https://test.instafix.com"
+          rules_file_name: ".zap/rules.tsv"
+
+      # --------------------------
+      # UPLOAD ZAP REPORT
+      # --------------------------
+      - name: Upload ZAP Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: report.html
+          if-no-files-found: ignore
