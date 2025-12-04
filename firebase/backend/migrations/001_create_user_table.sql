@@ -1,0 +1,13 @@
+CREATE TABLE IF NOT EXISTS "User" (
+    uid VARCHAR(255) PRIMARY KEY,
+    providerID VARCHAR(255),
+    displayName VARCHAR(255),
+    email VARCHAR(255) UNIQUE,
+    emailVerified BOOLEAN,
+    phoneNumber VARCHAR(50),
+    role VARCHAR(50),
+    photoURL TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS address TEXT;

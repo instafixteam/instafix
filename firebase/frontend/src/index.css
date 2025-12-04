@@ -1,0 +1,102 @@
+@import "tailwindcss/preflight";
+@import "tailwindcss/theme" theme(default);
+@import "tailwindcss/utilities";
+
+
+a {
+     @apply no-underline;
+}
+
+:root {
+  font-family: "Nunito Sans", sans-serif;
+  background-color: var(--offwhite); /* cream */
+  color: #1a1a1a;
+}
+
+:root {
+  --cream: #F5EFE6;
+  --offwhite: #FAF7F5;
+  --sand: #E8DFCA;
+  --bluebrand: #6D94C5;
+  --sky: #CBDCEB;
+}
+
+/* Background colors */
+.bg-cream {
+  background-color: var(--cream);
+}
+
+.bg-offwhite {
+  background-color: var(--offwhite);
+}
+
+.bg-sand {
+  background-color: var(--sand);
+}
+
+.bg-bluebrand {
+  background-color: var(--bluebrand);
+}
+
+.bg-sky {
+  background-color: var(--sky);
+}
+
+/* Text colors */
+.text-cream {
+  color: var(--cream);
+}
+
+.text-offwhite {
+  color: var(--offwhite);
+}
+
+.text-sand {
+  color: var(--sand);
+}
+
+.text-bluebrand {
+  color: var(--bluebrand);
+}
+
+.text-sky {
+  color: var(--sky);
+}
+
+.bg-bluebrand:hover {
+  background-color: var(--offwhite);
+}
+
+.border-bluebrand {
+  border: 1px solid var(--bluebrand);
+}
+
+.loginButton:hover {
+  background-color: var(--sky);
+}
+
+.signUpButton{
+  background-color: var(--bluebrand);
+  color: white;
+}
+
+.signUpButton:hover {
+  background-color: var(--sky);
+  color: var(--bluebrand);
+  border: 1px solid var(--bluebrand);
+}
+
+.menuButton:hover {
+  background-color: var(--sky);
+}
+
+.logOutButton{
+  background-color: var(--bluebrand);
+  color: white;
+}
+
+.logOutButton:hover {
+  background-color: #F8858B;
+  color: black;
+}
+

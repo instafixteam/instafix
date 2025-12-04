@@ -1,0 +1,17 @@
+{
+  "name": "InstaFix",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix frontend\" \"npm start --prefix backend\"",
+    "frontend": "npm run dev --prefix frontend",
+    "backend": "npm start --prefix backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  },
+  "dependencies": {
+    "connect-redis": "^9.0.0",
+    "express-session": "^1.18.2",
+    "redis": "^5.8.3"
+  }
+}
