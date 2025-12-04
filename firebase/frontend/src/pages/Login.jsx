@@ -17,7 +17,7 @@ const API_BASE =
   (import.meta?.env?.VITE_API_BASE && String(import.meta.env.VITE_API_BASE)) ||
   "http://localhost:5000";
 
-const RECAPTCHA_SITE_KEY = "6LdlM_QrAAAAABb7aK95qDRIcEYeR9SnCaSu4kco";
+const RECAPTCHA_SITE_KEY = import.meta?.env?.RECAPTCHA_SITE_KEY
 
 // ▸ Policy toggle: make customers TOTP-only (true) or allow SMS (false)
 const TOTP_ONLY_FOR_CUSTOMERS = true;
