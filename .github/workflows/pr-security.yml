@@ -13,7 +13,10 @@ jobs:
 
       # Secret Scanning
       - name: Secret Scan (Gitleaks)
-        uses: gitleaks/gitleaks-action@v2
+        run: |
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks-linux-amd64 -o gitleaks
+          chmod +x gitleaks
+          ./gitleaks detect --source . --no-banner --exit-code 1
 
       # SAST for JS/TS/JSX
       - name: Static Analysis (Semgrep)
