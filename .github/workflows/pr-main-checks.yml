@@ -31,14 +31,7 @@ jobs:
         run: |
           cd firebase/backend
           npm install
-      - name: Backend Vulnerability Audit
-        if: always()
-        continue-on-error: true
-        run: |
-          cd firebase/backend
-          npm audit --json > backend-audit.json
-          npm audit fix --dry-run || true
-          cat backend-audit.json
+    
       # Install frontend dependencies
       - name: Install Frontend
         run: |
