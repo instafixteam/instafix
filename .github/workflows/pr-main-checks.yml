@@ -25,27 +25,62 @@ jobs:
         with:
           config: "p/owasp-top-ten"
 
-      # Install backend dependencies
+      # --------------------------
+      # INSTALL BACKEND DEPS
+      # --------------------------
       - name: Install Backend
+        if: always()
         run: |
-          cd backend
+          cd firebase/backend
           npm install
-      # Install frontend dependencies
+
+      # NPM AUDIT BACKEND
+      - name: Backend Vulnerability Audit
+        if: always()
+        continue-on-error: true
+        run: |
+          cd firebase/backend
+          npm audit --json > backend-audit.json
+          npm audit fix --dry-run || true
+          cat backend-audit.json
+
+      # --------------------------
+      # INSTALL FRONTEND DEPS
+      # --------------------------
       - name: Install Frontend
+        if: always()
         run: |
-          cd frontend
+          cd firebase/frontend
           npm install
-      # SCA (Trivy filesystem scan)
-      - name: Dependency Scan Backend
+
+      # NPM AUDIT FRONTEND
+      - name: Frontend Vulnerability Audit
+        if: always()
+        continue-on-error: true
+        run: |
+          cd firebase/frontend
+          npm audit --json > frontend-audit.json
+          npm audit fix --dry-run || true
+          cat frontend-audit.json
+
+      # --------------------------
+      # TRIVY SCAN BACKEND
+      # --------------------------
+      - name: Dependency Scan Backend (Trivy)
+        if: always()
         uses: aquasecurity/trivy-action@0.20.0
         with:
           scan-type: fs
-          dir: ./backend
+          dir: ./firebase/backend
           severity: HIGH,CRITICAL
 
-      - name: Dependency Scan Frontend
+      # --------------------------
+      # TRIVY SCAN FRONTEND
+      # --------------------------
+      - name: Dependency Scan Frontend (Trivy)
+        if: always()
         uses: aquasecurity/trivy-action@0.20.0
         with:
           scan-type: fs
-          dir: ./frontend
+          dir: ./firebase/frontend
           severity: HIGH,CRITICAL
