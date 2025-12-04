@@ -9,7 +9,6 @@ import fs from "fs";
 import bodyParser from "body-parser";
 import pool from "./db.js";
 import admin from "firebase-admin";
-import serviceAccount from "./serviceAccountKey.json" assert { type: "json" };
 import rateLimit, { ipKeyGenerator } from "express-rate-limit"; //for db raaaaatee limitting
 import Joi from "joi";  //for db input validation
 
@@ -17,12 +16,17 @@ dotenv.config();
 
 
 
-// Read Firebase service account JSON
-const serviceAccount = JSON.parse(fs.readFileSync("./serviceAccountKey.json", "utf8"));
-
 // Initialize Firebase Admin
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
+  credential: admin.credential.cert({
+    type: process.env.FIREBASE_TYPE,
+    project_id: process.env.FIREBASE_PROJECT_ID,
+    private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+    private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+    client_email: process.env.FIREBASE_CLIENT_EMAIL,
+    client_id: process.env.FIREBASE_CLIENT_ID,
+    client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL
+  })
 });
 
 // Initialize Express
@@ -69,8 +73,15 @@ const services = [
 // === Initialize Firebase Admin ===
 try {
   admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    projectId: "instafix-860fe",
+    credential: admin.credential.cert({
+      type: process.env.FIREBASE_TYPE,
+      project_id: process.env.FIREBASE_PROJECT_ID,
+      private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+      private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+      client_email: process.env.FIREBASE_CLIENT_EMAIL,
+      client_id: process.env.FIREBASE_CLIENT_ID,
+      client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL
+    })
   });
   console.log("✅ Firebase Admin initialized successfully");
 } catch (error) {
