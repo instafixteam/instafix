@@ -1,140 +1,154 @@
-import { Menu, MenuButton, MenuItem, MenuItems, Transition, Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react'
-import { Fragment } from "react";
-import logo from "../assets/InstaFixLogo.png";
+import { useEffect, useState } from "react";
+import { auth } from "../firebase";
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 export default function AdminDashboard() {
+  const [technicians, setTechnicians] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadTechnicians();
+  }, []);
+
+  const loadTechnicians = async () => {
+    setLoading(true);
+    const token = await auth.currentUser.getIdToken();
+    console.log("Fetching technicians with token:", token);
+
+    const res = await fetch(`${API_BASE}/api/admin/technicians`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await res.json();
+    setTechnicians(data.technicians || []);
+    setLoading(false);
+  };
+
+  const updateStatus = async (uid, action) => {
+    // Optimistically update the state so UI doesn't jump
+    setTechnicians((prev) =>
+      prev.map((tech) =>
+        tech.uid === uid
+          ? { ...tech, adminApproval: action === "approve" ? true : false }
+          : tech
+      )
+    );
+
+    // Send request to server (no full reload)
+    try {
+      await fetch(`${API_BASE}/api/admin/technicians/${uid}/${action}`, {
+        headers: {
+          Authorization: `Bearer ${await auth.currentUser.getIdToken()}`,
+        },
+        method: "POST",
+      });
+    } catch (err) {
+      console.error("Failed to update status:", err);
+      // Revert if failed
+      loadTechnicians();
+    }
+  };
+
+  const badgeClass = (status, type) => {
+    if (type === "kyc") {
+      if (status === "init") return "bg-green-100 text-green-800";
+      if (status === "approved") return "bg-green-100 text-green-800";
+      if (status === "pending") return "bg-yellow-100 text-yellow-800";
+      if (status === "rejected") return "bg-red-100 text-red-800";
+    } else {
+      if (status === true) return "bg-green-100 text-green-800";
+      if (status === false) return "bg-red-100 text-red-800";
+      if (status === null) return "bg-gray-100 text-gray-600";
+    }
+  };
+
+  const badgeText = (status, type) => {
+    if (type === "kyc") {
+      if (status === "init") return "KYC Initiated";
+      if (status === "approved") return "KYC Completed";
+      if (status === "pending") return "Pending";
+      if (status === "rejected") return "Rejected";
+    } else {
+      if (status === true) return "Approved";
+      if (status === false) return "Rejected";
+      if (status === null) return "Not Reviewed";
+    }
+  };
+
   return (
-    <div className="min-h-full">
-      <nav className="bg-sky">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            {/* Left: Logo */}
-            <div className="flex items-center">
-              <img src={logo} alt="Your Company" className="size-8" />
-
-              {/* Desktop Nav Links */}
-              <div className="hidden md:block ml-10 space-x-4">
-                <a href="#" className="rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white">Dashboard</a>
-                <a href="#" className="rounded-lg px-3 py-2 text-sm font-medium text-black hover:bg-white/5 hover:text-blue-700">Technician Applications</a>
-                <a href="#" className="rounded-lg px-3 py-2 text-sm font-medium text-black hover:bg-white/5 hover:text-blue-700">Services</a>
-                <a href="#" className="rounded-lg px-3 py-2 text-sm font-medium text-black hover:bg-white/5 hover:text-blue-700">Users</a>
-                <a href="#" className="rounded-lg px-3 py-2 text-sm font-medium text-black hover:bg-white/5 hover:text-blue-700">Reports</a>
-              </div>
-            </div>
-
-            {/* Right: Notifications + Profile Dropdown */}
-            <div className="hidden md:block">
-              <div className="ml-4 flex items-center">
-                {/* Notifications */}
-                <button
-                  type="button"
-                  className="relative rounded-full p-1 text-gray-400 hover:text-white focus:outline-2 focus:outline-offset-2 focus:outline-indigo-500"
-                >
-                  <span className="sr-only">View notifications</span>
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    className="size-6"
-                  >
-                    <path
-                      d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
-
-                {/* Profile dropdown */}
-                <Menu as="div" className="relative ml-3">
-                  <MenuButton className="relative flex max-w-xs items-center rounded-full focus:outline-none">
-                    <img
-                      src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                      alt=""
-                      className="size-8 rounded-full outline -outline-offset-1 outline-white/10"
-                    />
-                  </MenuButton>
-                  <Transition
-                    as={Fragment}
-                    enter="transition ease-out duration-100"
-                    enterFrom="transform opacity-0 scale-95"
-                    enterTo="transform opacity-100 scale-100"
-                    leave="transition ease-in duration-75"
-                    leaveFrom="transform opacity-100 scale-100"
-                    leaveTo="transform opacity-0 scale-95"
-                  >
-                    <MenuItems className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-lg bg-white py-1 shadow-lg focus:outline-none">
-                      <MenuItem as="a" href="#" className="block px-4 py-2 text-sm text-gray-700 data-[active]:bg-gray-100 data-[active]:text-gray-900">
-                        Your Profile
-                      </MenuItem>
-                      <MenuItem as="a" href="#" className="block px-4 py-2 text-sm text-gray-700 data-[active]:bg-gray-100 data-[active]:text-gray-900">
-                        Settings
-                      </MenuItem>
-                      <MenuItem as="a" href="#" className="block px-4 py-2 text-sm text-gray-700 data-[active]:bg-gray-100 data-[active]:text-gray-900">
-                        Sign out
-                      </MenuItem>
-                    </MenuItems>
-                  </Transition>
-                </Menu>
-              </div>
-            </div>
-
-            {/* Mobile menu button with Disclosure */}
-            <div className="md:hidden">
-              <Disclosure>
-                {({ open }) => (
-                  <>
-                    <DisclosureButton className="inline-flex items-center justify-center rounded-lg p-2 text-gray-400 hover:bg-white/5 hover:text-white focus:outline-2 focus:outline-offset-2 focus:outline-indigo-500">
-                      <span className="sr-only">Open main menu</span>
-                      {open ? (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-6">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      ) : (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-6">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                        </svg>
-                      )}
-                    </DisclosureButton>
-
-                    <DisclosurePanel className="absolute top-16 z-50 left-0 right-0 bg-offwhite shadow-md rounded-lg p-4 space-y-2">
-                      <a href="#" className="block px-3 py-2 text-base font-medium text-black hover:bg-gray-100 rounded-">
-                        Dashboard
-                      </a>
-                      <a href="#" className="block px-3 py-2 text-base font-medium text-black hover:bg-gray-100 rounded-lg">
-                        Technician Applications
-                      </a>
-                      <a href="#" className="block px-3 py-2 text-base font-medium text-black hover:bg-gray-100 rounded-lg">
-                        Services
-                      </a>
-                      <a href="#" className="block px-3 py-2 text-base font-medium text-black hover:bg-gray-100 rounded-lg">
-                        Users
-                      </a>
-                      <a href="#" className="block px-3 py-2 text-base font-medium text-black hover:bg-gray-100 rounded-lg">
-                        Reports
-                      </a>
-                    </DisclosurePanel>
-                  </>
-                )}
-              </Disclosure>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <header className="relative shadow-sm">
-        <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-            Dashboard
-          </h1>
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white shadow sticky top-0 z-10">
+        <div className="mx-auto max-w-7xl px-4 py-5 flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
         </div>
       </header>
 
-      <main>
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          {/* Admin content goes here */}
-        </div>
+      <main className="mx-auto max-w-7xl px-4 py-6">
+        <h2 className="text-xl font-semibold mb-6">Technician Approvals</h2>
+
+        {loading ? (
+          <p className="text-center mt-10 text-gray-500">Loading...</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white shadow-lg rounded-lg table-fixed">
+              <thead className="bg-gray-100">
+                <tr className="align-middle">
+                  <th className="p-4 w-1/3 text-left">Email</th>
+                  <th className="p-4 w-1/6 text-left">KYC Status</th>
+                  <th className="p-4 w-1/6 text-left">Admin Approval</th>
+                  <th className="p-4 w-1/3 text-middle">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {technicians.map((tech) => (
+                  <tr
+                    key={tech.uid}
+                    className="hover:bg-gray-50 transition-colors duration-150"
+                  >
+                    <td className="p-4 truncate">{tech.email}</td>
+                    <td className="p-4">
+                      <span
+                        className={`px-2 py-1 rounded-full text-sm font-medium ${badgeClass(
+                          tech.kycStatus,
+                          "kyc"
+                        )}`}
+                      >
+                        {badgeText(tech.kycStatus, "kyc")}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <span
+                        className={`px-2 py-1 rounded-full text-sm font-medium ${badgeClass(
+                          tech.adminApproval,
+                          "admin"
+                        )}`}
+                      >
+                        {badgeText(tech.adminApproval, "admin")}
+                      </span>
+                    </td>
+                    <td className="p-4 flex gap-3">
+                      <button
+                        className="flex-1 bg-green-200 text-green-900 px-4 py-2 rounded-md hover:bg-green-300 transition"
+                        onClick={() => updateStatus(tech.uid, "approve")}
+                      >
+                        Approve
+                      </button>
+                      <button
+                        className="flex-1 bg-red-200 text-red-900 px-4 py-2 rounded-md hover:bg-red-300 transition"
+                        onClick={() => updateStatus(tech.uid, "reject")}
+                      >
+                        Reject
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </main>
     </div>
   );

@@ -4,7 +4,6 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
@@ -13,14 +12,24 @@
   "dependencies": {
     "@headlessui/react": "^2.2.9",
     "@react-router/dev": "^7.9.4",
+    "@stripe/react-stripe-js": "^5.3.0",
+    "@stripe/stripe-js": "^8.3.0",
+    "@sumsub/websdk": "^2.5.0",
     "@tailwindcss/vite": "^4.1.15",
     "@tailwindplus/elements": "^1.0.18",
-    "firebase": "^12.4.0",
+    "axios": "^1.13.2",
+    "firebase": "^12.5.0",
+    "joi": "^18.0.1",
+    "libphonenumber-js": "^1.12.26",
+    "nodemailer": "^7.0.10",
+    "qrcode": "^1.5.4",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-router-dom": "^7.9.4"
+    "react-router-dom": "^7.9.4",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
+    "@cyclonedx/cyclonedx-npm": "^4.1.1",
     "@eslint/js": "^9.36.0",
     "@types/react": "^19.1.16",
     "@types/react-dom": "^19.1.9",

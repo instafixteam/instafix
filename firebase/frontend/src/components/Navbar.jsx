@@ -1,7 +1,11 @@
-import { useState } from "react";
+import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
+import { Fragment, useEffect, useState, useCallback } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
+
+// Prefer AuthContext (RBAC branch) if available, otherwise fall back to the hook (main branch)
+import { useAuthContext } from "../Context/AuthContext";
 import useAuthState from "../hooks/useAuthState";
 
 import logo from "../assets/InstaFixLogo.png";
@@ -10,29 +14,92 @@ const linkBase = "px-3 py-2 rounded-lg text-sm font-medium transition-colors";
 const linkIdle = "text-gray-700 menuButton transition";
 const linkActive = "menuButton";
 
+const API_BASE =
+  (import.meta?.env?.VITE_API_BASE && String(import.meta.env.VITE_API_BASE)) ||
+  "http://localhost:5000"; // matches merged backend default; change if needed
+
 export default function Navbar() {
   const [open, setOpen] = useState(false);
-  const user = useAuthState();
-  const navigate = useNavigate(); // ✅ inside component body
+  const [cartCount, setCartCount] = useState(0);
+  const navigate = useNavigate();
+
+  // Get user from context if present; otherwise from custom hook
+  let ctxUser;
+  try {
+    ctxUser = useAuthContext?.();
+  } catch {
+    ctxUser = null;
+  }
+  const hookUser = useAuthState?.();
+  const currentUser = ctxUser?.currentUser || hookUser || null;
+
+  const fetchCartCount = useCallback(async () => {
+    if (!currentUser) {
+      setCartCount(0);
+      return;
+    }
+    try {
+      const r = await fetch(`${API_BASE}/api/cart`, {
+        credentials: "include", // send __session cookie
+      });
+      if (!r.ok) {
+        // 401/403 when not signed in → zero out
+        setCartCount(0);
+        return;
+      }
+      const data = await r.json();
+      const count = Array.isArray(data?.items)
+        ? data.items.reduce((sum, it) => sum + Number(it.quantity || 0), 0)
+        : 0;
+      setCartCount(count);
+    } catch {
+      // network hiccup: don't explode the navbar
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    fetchCartCount();
+  }, [fetchCartCount]);
+
+  // Refresh when the window regains focus (tab switch)
+  useEffect(() => {
+    const onFocus = () => fetchCartCount();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [fetchCartCount]);
+
+  // Lightweight cross-app bus: listen for "cart:updated" to refresh badge
+  useEffect(() => {
+    const onCartUpdated = () => fetchCartCount();
+    window.addEventListener("cart:updated", onCartUpdated);
+    return () => window.removeEventListener("cart:updated", onCartUpdated);
+  }, [fetchCartCount]);
 
   const handleLogout = async () => {
     try {
-      // Sign out from Firebase
+      // Firebase sign out
       await signOut(auth);
 
-      // Destroy session on backend
-      await fetch("http://localhost:5050/api/logout", {
+      // Destroy session on backend (main branch behavior)
+      await fetch(`${API_BASE}/api/logout`, {
         method: "POST",
         credentials: "include",
       });
 
-      // Redirect to login page
+      setCartCount(0);
       navigate("/login");
     } catch (err) {
       console.error("Logout failed:", err);
       alert("Failed to logout. Try again.");
     }
   };
+
+  const navLinks = [
+    { to: "/", label: "Home" },
+    { to: "/services", label: "Services" }, // desktop says Shop; mobile 'Services' in one branch — keeping Shop for consistency
+    { to: "/about", label: "About" },
+    { to: "/contact", label: "Contact" },
+  ];
 
   return (
     <header className="fixed top-0 inset-x-0 z-50 bg-white/80 backdrop-blur shadow-md">
@@ -45,12 +112,7 @@ export default function Navbar() {
 
         {/* Center: Links (desktop) */}
         <nav className="hidden md:flex items-center gap-2 ml-8">
-          {[
-            { to: "/", label: "Home" },
-            { to: "/shop", label: "Shop" },
-            { to: "/about", label: "About" },
-            { to: "/contact", label: "Contact" },
-          ].map((l) => (
+          {navLinks.map((l) => (
             <NavLink
               key={l.to}
               to={l.to}
@@ -63,9 +125,41 @@ export default function Navbar() {
           ))}
         </nav>
 
-        {/* Right: Auth buttons (desktop) */}
+        {/* Right: Cart + Auth (desktop) */}
         <div className="ml-auto hidden md:flex items-center gap-3">
-          {!user ? (
+           {/* Cart button (visible for everyone; will show 0 when logged out) */}
+          
+          <Link
+            to="/cart"
+            aria-label="View cart"
+            className="relative inline-flex items-center justify-center rounded-lg px-3 py-2 hover:bg-gray-100 transition"
+            onClick={() => setOpen(false)}
+          >
+            {/* Simple cart icon */}
+            <svg
+              viewBox="0 0 24 24"
+              className="w-6 h-6 text-gray-800"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="9" cy="21" r="1" />
+              <circle cx="20" cy="21" r="1" />
+              <path d="M1 1h4l2.68 12.39A2 2 0 0 0 9.62 15h8.76a2 2 0 0 0 1.98-1.61L23 6H6" />
+            </svg>
+
+            {/* Badge */}
+            <span
+              className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-bluebrand text-white text-xs font-semibold flex items-center justify-center"
+              aria-live="polite"
+            >
+              {cartCount}
+            </span>
+          </Link>
+          
+          {!currentUser ? (
             <>
               <Link
                 to="/login"
@@ -75,21 +169,49 @@ export default function Navbar() {
               </Link>
               <Link
                 to="/signup"
-                className="px-4 py-2 text-sm font-medium rounded-lg bg-bluebrand text-white signUpButton transition"
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-bluebrand border text-white signUpButton transition"
               >
                 Sign Up
               </Link>
             </>
           ) : (
-            <>
-              <span className="text-sm px-3 py-2">Hello 👋 {user.email}</span>
-              <button
-                onClick={handleLogout}
-                className="px-3 py-1 rounded bg-bluebrand logOutButton transition"
+            <Menu as="div" className="relative ml-1">
+              <MenuButton className="relative flex max-w-xs items-center rounded-full focus:outline-none">
+                <img
+                  src={currentUser?.photoURL || "https://avatar.iran.liara.run/public/93"}
+                  alt="avatar"
+                  className="size-8 rounded-full outline -outline-offset-1 outline-white/10"
+                />
+              </MenuButton>
+              <Transition
+                as={Fragment}
+                enter="transition ease-out duration-100"
+                enterFrom="transform opacity-0 scale-95"
+                enterTo="transform opacity-100 scale-100"
+                leave="transition ease-in duration-75"
+                leaveFrom="transform opacity-100 scale-100"
+                leaveTo="transform opacity-0 scale-95"
               >
-                Logout
-              </button>
-            </>
+                <MenuItems className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-lg bg-white py-1 shadow-lg focus:outline-none">
+                  <MenuItem
+                    as={Link}
+                    to={`/profile/${currentUser?.uid}`}
+                    className="block px-4 py-2 text-sm text-gray-700 data-[active]:bg-gray-100 data-[active]:text-gray-900"
+                  >
+                    Your Profile
+                  </MenuItem>
+
+                  <MenuItem
+                    as="button"
+                    type="button"
+                    onClick={handleLogout}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 data-[active]:bg-gray-100 data-[active]:text-gray-900"
+                  >
+                    Logout
+                  </MenuItem>
+                </MenuItems>
+              </Transition>
+            </Menu>
           )}
         </div>
 
@@ -119,12 +241,7 @@ export default function Navbar() {
       {open && (
         <div className="md:hidden bg-offwhite shadow-md">
           <nav className="px-4 py-3 flex flex-col gap-2">
-            {[
-              { to: "/", label: "Home" },
-              { to: "/shop", label: "Services" },
-              { to: "/about", label: "About" },
-              { to: "/contact", label: "Contact" },
-            ].map((l) => (
+            {navLinks.map((l) => (
               <NavLink
                 key={l.to}
                 to={l.to}
@@ -137,12 +254,37 @@ export default function Navbar() {
               </NavLink>
             ))}
 
-            {user ? (
+            {/* Mobile cart row */}
+            <Link
+              to="/cart"
+              onClick={() => setOpen(false)}
+              className={`flex items-center justify-between ${linkBase} ${linkIdle}`}
+              aria-label="View cart"
+            >
+              <span>Cart</span>
+              <span className="ml-2 inline-flex items-center justify-center min-w-6 h-6 px-2 rounded-full bg-bluebrand text-white text-xs font-semibold">
+                {cartCount}
+              </span>
+            </Link>
+
+            {currentUser ? (
               <>
-                <span className="text-sm px-3 py-2">Hello 👋 {user.email}</span>
+                <span className="text-sm px-3 py-2">
+                  Hello 👋 {currentUser.displayName || currentUser.email}
+                  <Link
+                    to={`/profile/${currentUser.uid}`}
+                    onClick={() => setOpen(false)}
+                    className="px-5 py-2 text-sm text-bluebrand hover:text-blue-500 rounded-md"
+                  >
+                    ✏️ Edit Profile
+                  </Link>
+                </span>
                 <button
-                  onClick={handleLogout}
-                  className="px-3 py-1 rounded bg-bluebrand logOutButton transition"
+                  onClick={async () => {
+                    await handleLogout();
+                    setOpen(false);
+                  }}
+                  className="px-3 py-1 rounded bg-bluebrand logOutButton transition text-white"
                 >
                   Logout
                 </button>
@@ -159,7 +301,7 @@ export default function Navbar() {
                 <Link
                   to="/signup"
                   onClick={() => setOpen(false)}
-                  className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-bluebrand text-white text-center signUpButton transition"
+                  className="flex-1 px-4 py-2 text-sm font-medium border rounded-lg bg-bluebrand text-white text-center signUpButton transition"
                 >
                   Sign Up
                 </Link>

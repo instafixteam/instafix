@@ -38,7 +38,7 @@ export default function GoogleButton() {
       }
 
       // Send Firebase token to backend to create session
-      await fetch("http://localhost:5050/api/login", {
+      await fetch("http://localhost:5000/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
