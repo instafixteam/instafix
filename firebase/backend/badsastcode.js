@@ -1,5 +1,6 @@
-// firebase/backend/badsastcode.js
-function testEval() {
-    eval("2+2"); // HIGH severity
-}
-testEval();
+const userInput = "2+2";
+
+// Semgrep will flag this: eval with dynamic input
+const result = eval(userInput);
+
+console.log("Result is:", result);
