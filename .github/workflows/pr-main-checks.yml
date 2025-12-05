@@ -26,6 +26,7 @@ jobs:
         uses: returntocorp/semgrep-action@v1
         with:
           config: "p/owasp-top-ten"
+          scan: "firebase/backend"   # scan everything in backend
 
       # Install backend dependencies
       - name: Install Backend
