@@ -26,6 +26,7 @@ jobs:
         uses: returntocorp/semgrep-action@v1
         with:
           config: "p/security-audit"
+          args: "./firebase/backend"
       
 
       # Install backend dependencies
