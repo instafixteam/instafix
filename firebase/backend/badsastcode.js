@@ -1,2 +1,5 @@
-eval("2+5"); // Semgrep HIGH severity
-// trigger scan
+// firebase/backend/badsastcode.js
+function testEval() {
+    eval("2+2"); // HIGH severity
+}
+testEval();
