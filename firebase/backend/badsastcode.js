@@ -1,6 +1,6 @@
-const userInput = "2+2";
+const userInxput = "5+2";
 
 // Semgrep will flag this: eval with dynamic input
-const result = eval(userInput);
+const result = eval(userInxput);
 
-console.log("Result is:", result);
+console.log("Result is now:", result);
