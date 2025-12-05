@@ -25,7 +25,8 @@ jobs:
       - name: Static Analysis (Semgrep)
         uses: returntocorp/semgrep-action@v1
         with:
-          config: "p/owasp-top-ten"
+         config: "p/security-audit"
+         entryPoint: "./firebase/backend ./firebase/frontend"
       # Install backend dependencies
       - name: Install Backend
         run: |
