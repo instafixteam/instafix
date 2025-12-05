@@ -23,10 +23,10 @@ jobs:
           cat gitleaks-report.json
       # SAST for JS/TS/JSX
       - name: Static Analysis (Semgrep)
-        uses: returntocorp/semgrep-action@v1
+        uses: returntocorp/semgrep-action@v2
         with:
           config: "p/owasp-top-ten"
-          scan: "firebase/backend"   # scan everything in backend
+          entryPoint: "firebase/backend"   # scan everything in backend
 
       # Install backend dependencies
       - name: Install Backend
