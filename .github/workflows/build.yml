@@ -96,12 +96,11 @@ jobs:
           image-ref: ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}
           severity: HIGH,CRITICAL
       
+     # --------------------------
+      # SBOM GENERATION (Syft)
       # --------------------------
-# SBOM GENERATION (Syft)
-# --------------------------
-
       - name: Generate Backend SBOM (Syft)
-        uses: anchore/sbom-action/download-syft@v1
+        uses: anchore/syft@v1
         with:
           image: ghcr.io/${{ github.repository }}/backend:${{ github.sha }}
           output: sbom-backend.spdx.json
@@ -113,7 +112,7 @@ jobs:
           path: sbom-backend.spdx.json
       
       - name: Generate Frontend SBOM (Syft)
-        uses: anchore/sbom-action/download-syft@v1
+        uses: anchore/syft@v1
         with:
           image: ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}
           output: sbom-frontend.spdx.json
