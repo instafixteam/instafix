@@ -9,7 +9,7 @@ import {
 } from "firebase/auth";
 import { auth } from "../firebase";
 import logo from "../assets/InstaFixLogo.png";
-import { techSignupSchema } from "../../../backend/validations/technician.validation";
+import { techSignupSchema } from "../validations/technician.validation";
 
 const API_BASE =
   (import.meta?.env?.VITE_API_BASE && String(import.meta.env.VITE_API_BASE)) ||
