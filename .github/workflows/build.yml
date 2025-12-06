@@ -95,6 +95,39 @@ jobs:
         with:
           image-ref: ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}
           severity: HIGH,CRITICAL
+      
+      # --------------------------
+      # SBOM GENERATION (Syft)
+      # --------------------------
+      # Syft creates a Software Bill of Materials for the container image.
+      # This lists all dependencies inside the image (npm packages, OS libraries, etc.)
+      # SBOM is required for supply-chain security and future CVE tracking.
+      # We generate one SBOM for backend and one for frontend.
+
+      - name: Generate Backend SBOM (Syft)
+        uses: anchore/syft-action@v0.11.0
+        with:
+          image: ghcr.io/${{ github.repository }}/backend:${{ github.sha }}
+          output: sbom-backend.spdx.json
+
+      - name: Upload Backend SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-backend
+          path: sbom-backend.spdx.json
+
+      - name: Generate Frontend SBOM (Syft)
+        uses: anchore/syft-action@v0.11.0
+        with:
+          image: ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}
+          output: sbom-frontend.spdx.json
+
+      - name: Upload Frontend SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-frontend
+          path: sbom-frontend.spdx.json
+
 
       # --------------------------
       # PUSH DOCKER IMAGES
