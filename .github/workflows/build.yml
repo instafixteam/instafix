@@ -97,31 +97,34 @@ jobs:
           severity: HIGH,CRITICAL
       
      # --------------------------
-      # SBOM GENERATION (Syft)
-      # --------------------------
-      - name: Generate Backend SBOM (Syft)
-        uses: anchore/syft@v1
+# SBOM GENERATION (CycloneDX)
+# --------------------------
+
+      - name: SBOM Backend (CycloneDX)
+        uses: CycloneDX/gh-actions@v2
         with:
           image: ghcr.io/${{ github.repository }}/backend:${{ github.sha }}
-          output: sbom-backend.spdx.json
+          format: json
+          output: sbom-backend.bom.json
       
       - name: Upload Backend SBOM
         uses: actions/upload-artifact@v4
         with:
           name: sbom-backend
-          path: sbom-backend.spdx.json
+          path: sbom-backend.bom.json
       
-      - name: Generate Frontend SBOM (Syft)
-        uses: anchore/syft@v1
+      - name: SBOM Frontend (CycloneDX)
+        uses: CycloneDX/gh-actions@v2
         with:
           image: ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}
-          output: sbom-frontend.spdx.json
+          format: json
+          output: sbom-frontend.bom.json
       
       - name: Upload Frontend SBOM
         uses: actions/upload-artifact@v4
         with:
           name: sbom-frontend
-          path: sbom-frontend.spdx.json
+          path: sbom-frontend.bom.json
 
       # --------------------------
       # PUSH DOCKER IMAGES
