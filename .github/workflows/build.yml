@@ -96,35 +96,6 @@ jobs:
           image-ref: ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}
           severity: HIGH,CRITICAL
       
-     # --------------------------
-# SBOM GENERATION (CycloneDX)
-# --------------------------
-
-      - name: SBOM Backend (CycloneDX)
-        uses: CycloneDX/gh-actions@v2
-        with:
-          image: ghcr.io/${{ github.repository }}/backend:${{ github.sha }}
-          format: json
-          output: sbom-backend.bom.json
-      
-      - name: Upload Backend SBOM
-        uses: actions/upload-artifact@v4
-        with:
-          name: sbom-backend
-          path: sbom-backend.bom.json
-      
-      - name: SBOM Frontend (CycloneDX)
-        uses: CycloneDX/gh-actions@v2
-        with:
-          image: ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}
-          format: json
-          output: sbom-frontend.bom.json
-      
-      - name: Upload Frontend SBOM
-        uses: actions/upload-artifact@v4
-        with:
-          name: sbom-frontend
-          path: sbom-frontend.bom.json
 
       # --------------------------
       # PUSH DOCKER IMAGES
