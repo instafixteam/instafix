@@ -94,11 +94,11 @@ jobs:
       # GENERATE SBOMs (SYFT)
       # --------------------------
       - name: Generate SBOM for Backend Image
-        uses: anchore/syft-action@v0.1.0
+        uses: anchore/sbom-action@v0
         with:
           image: ${{ secrets.DOCKERHUB_USERNAME }}/instafix-backend:${{ github.sha }}
-          output-file: sbom-backend-${{ github.sha }}.json
           format: cyclonedx-json
+          output-file: sbom-backend-${{ github.sha }}.json
 
       - name: Upload Backend SBOM
         uses: actions/upload-artifact@v4
@@ -107,11 +107,11 @@ jobs:
           path: sbom-backend-${{ github.sha }}.json
 
       - name: Generate SBOM for Frontend Image
-        uses: anchore/syft-action@v0.1.0
+        uses: anchore/sbom-action@v0
         with:
           image: ${{ secrets.DOCKERHUB_USERNAME }}/instafix-frontend:${{ github.sha }}
-          output-file: sbom-frontend-${{ github.sha }}.json
           format: cyclonedx-json
+          output-file: sbom-frontend-${{ github.sha }}.json
 
       - name: Upload Frontend SBOM
         uses: actions/upload-artifact@v4
