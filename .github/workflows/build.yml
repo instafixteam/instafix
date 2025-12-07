@@ -89,6 +89,36 @@ jobs:
       
       - name: Push Frontend Image
         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/instafix-frontend:${{ github.sha }}
+
+      # --------------------------
+      # GENERATE SBOMs (SYFT)
+      # --------------------------
+      - name: Generate SBOM for Backend Image
+        uses: anchore/syft-action@v0.1.0
+        with:
+          image: ${{ secrets.DOCKERHUB_USERNAME }}/instafix-backend:${{ github.sha }}
+          output-file: sbom-backend-${{ github.sha }}.json
+          format: cyclonedx-json
+
+      - name: Upload Backend SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-backend
+          path: sbom-backend-${{ github.sha }}.json
+
+      - name: Generate SBOM for Frontend Image
+        uses: anchore/syft-action@v0.1.0
+        with:
+          image: ${{ secrets.DOCKERHUB_USERNAME }}/instafix-frontend:${{ github.sha }}
+          output-file: sbom-frontend-${{ github.sha }}.json
+          format: cyclonedx-json
+
+      - name: Upload Frontend SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-frontend
+          path: sbom-frontend-${{ github.sha }}.json
+          
       # --------------------------
       # TRIVY SCAN DOCKER IMAGES
       # --------------------------
